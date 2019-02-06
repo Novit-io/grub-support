@@ -1,0 +1,19 @@
+#! /bin/bash
+
+cleanup() {
+    umount -R chroot
+}
+
+set -ex
+
+mkdir -p chroot/{dev,proc,sys,output} output
+
+mount --bind chroot chroot
+mount --bind output chroot/output
+mount --bind /dev   chroot/dev
+mount --bind /proc  chroot/proc
+mount --bind /sys   chroot/sys
+
+trap cleanup EXIT
+
+chroot chroot "$@"

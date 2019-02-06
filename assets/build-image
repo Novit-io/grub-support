@@ -1,0 +1,42 @@
+#! /bin/bash
+
+set -ex
+
+out=/output/grub-intel.raw
+
+if [ -e $out ]; then
+    rm $out
+fi
+
+# create the file
+truncate -s2100M $out
+
+# partition it
+sgdisk \
+		--new=0:4096:+2G --typecode=0:EF00 -c 0:boot   \
+		--new=0:0:+2M --typecode=0:EF02 -c 0:BIOS-BOOT \
+		--hybrid=1:2 --print $out
+
+dev=$(losetup --find --show --partscan $out)
+trap "losetup -d $dev" EXIT
+
+devmap=/tmp/devmap
+cat >$devmap <<EOF
+(hd0) $dev
+EOF
+
+# format filesystems
+mkfs.vfat -n BLKBOOT ${dev}p1
+
+# mount
+mkdir -p /mnt
+(
+mount ${dev}p1 /mnt
+trap "umount /mnt" EXIT
+
+mkdir -p /mnt/grub
+cp /assets/grub.cfg /mnt/grub
+
+grub-install --target=i386-pc --boot-directory=/mnt $dev
+grub-install --target=x86_64-efi --removable --boot-directory=/mnt --efi-directory=/mnt
+)
