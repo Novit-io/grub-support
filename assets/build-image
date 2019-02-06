@@ -13,9 +13,9 @@ truncate -s2100M $out
 
 # partition it
 sgdisk \
-		--new=0:4096:+2G --typecode=0:EF00 -c 0:boot   \
-		--new=0:0:+2M --typecode=0:EF02 -c 0:BIOS-BOOT \
-		--hybrid=1:2 --print $out
+	--new=0:4096:+2G --typecode=0:EF00 -c 0:boot   \
+	--new=0:0:+2M    --typecode=0:EF02 -c 0:BIOS-BOOT \
+	--hybrid=1:2 --print $out
 
 dev=$(losetup --find --show --partscan $out)
 trap "losetup -d $dev" EXIT
